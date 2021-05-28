@@ -89,7 +89,7 @@ listClients(){
 		# if the last seen is zero, send notification only if the last status is online in the file txt
 		if [ "offline" != $LAST_CONNECTION_STATUS ]; then
 			echo "offline" > $CLIENT_CONNECTION_FILE
-			SEND_NOTIFICATION="disconnesso"
+			SEND_NOTIFICATION="disconnected"
 		fi
 	fi
 

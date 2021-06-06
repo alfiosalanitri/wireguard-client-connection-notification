@@ -5,7 +5,6 @@
 
 #Config variable
 CURRENT_PATH="$("pwd")"
-CLIENTS_FILE="/etc/wireguard/configs/clients.txt"
 CLIENTS_CONNECTION_PATH="$CURRENT_PATH/clients"
 
 # current time
@@ -17,11 +16,6 @@ TIME_LIMIT=15
 #telegram section
 TELEGRAM_CHAT_ID="your-chat-id"
 TELEGRAM_BOT_ID="your-bot-api-key"
-
-# no wireguard clients, exit.
-if [ ! -s "$CLIENTS_FILE" ]; then
-    exit 1
-fi
 
 # human readable bytes
 hr(){
@@ -48,7 +42,7 @@ listClients(){
         BYTES_RECEIVED="$(awk '{ print $6 }' <<< "$LINE")"
         BYTES_SENT="$(awk '{ print $7 }' <<< "$LINE")"
         LAST_SEEN="$(awk '{ print $5 }' <<< "$LINE")"
-        CLIENT_NAME="$(grep "$PUBLIC_KEY" "$CLIENTS_FILE" | awk '{ print $1 }')"
+        CLIENT_NAME="$(grep -R "$PUBLIC_KEY" /etc/wireguard/keys/ | awk -F"/etc/wireguard/keys/|_pub:" '{print $2}')"
 	CLIENT_CONNECTION_FILE="$CLIENTS_CONNECTION_PATH/$CLIENT_NAME.txt"
 
 	# first time, create the client file

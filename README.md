@@ -10,4 +10,4 @@ Send a message to telegram when a client is connected or disconnected from wireg
   - `sudo -s`
   - `chmod +x /path/to/wireguard-client-connection-notification/wg-clients-guardian.sh`
   - `crontab -e`
-  - `*/5 * * *  * cd  /path/to/wireguard-client-connection-notification/wg-clients-guardian.sh && /path/to/wireguard-client-connection-notification/wg-clients-guardian.sh > /dev/null 2>&1`
+  - `* * * *  * cd  /path/to/wireguard-client-connection-notification/wg-clients-guardian.sh && /path/to/wireguard-client-connection-notification/wg-clients-guardian.sh > /dev/null 2>&1`

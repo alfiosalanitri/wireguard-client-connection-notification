@@ -42,9 +42,8 @@ listClients(){
         BYTES_RECEIVED="$(awk '{ print $6 }' <<< "$LINE")"
         BYTES_SENT="$(awk '{ print $7 }' <<< "$LINE")"
         LAST_SEEN="$(awk '{ print $5 }' <<< "$LINE")"
-        CLIENT_NAME="$(grep -R "$PUBLIC_KEY" /etc/wireguard/keys/ | awk -F"/etc/wireguard/keys/|_pub:" '{print $2}')"
-	CLIENT_NAME=$(echo "$a" | sed -e 's./..g' <<< "${CLIENT_NAME}")
-	CLIENT_CONNECTION_FILE="$CLIENTS_CONNECTION_PATH/$CLIENT_NAME.txt"
+        CLIENT_NAME="$(grep -R "$PUBLIC_KEY" /etc/wireguard/keys/ | awk -F"/etc/wireguard/keys/|_pub:" '{print $2}' | sed -e 's./..g')"
+		CLIENT_CONNECTION_FILE="$CLIENTS_CONNECTION_PATH/$CLIENT_NAME.txt"
 
 	# first time, create the client file
 	if [ ! -f "$CLIENT_CONNECTION_FILE" ]; then

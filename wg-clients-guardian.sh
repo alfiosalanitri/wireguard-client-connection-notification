@@ -102,4 +102,4 @@ listClients() {
 
 #start the script
 listClients
-exit 1
+exit 0

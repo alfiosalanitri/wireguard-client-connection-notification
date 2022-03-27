@@ -1,105 +1,91 @@
 #!/bin/bash
+# This script is written by Alfio Salanitri <www.alfiosalanitri.it> and are licensed under MIT License.
+# Credits: This script is inspired to https://github.com/pivpn/pivpn/blob/master/scripts/wireguard/clientSTAT.sh
 
-#Author: www.alfiosalanitri.it
-#Credits: This script is inspired to https://github.com/pivpn/pivpn/blob/master/scripts/wireguard/clientSTAT.sh
+# config variables
+current_path=$(pwd)
+clients_directory="$current_path/clients"
+now=$(date +%s)
 
-#Config variable
-CURRENT_PATH="$("pwd")"
-CLIENTS_CONNECTION_PATH="$CURRENT_PATH/clients"
+# after X minutes the clients will be considered disconnected
+timeout=5
 
-# current time
-NOW=$(date +%s)
+# check if wireguard exists
+if ! command -v wg &> /dev/null; then
+	printf "Sorry, but wireguard is required. Install it with before.\n"
+	exit 1;
+fi
+wireguard_clients=$(wg show wg0 dump | tail -n +2) # remove first line from list
+if [ "" == "$wireguard_clients" ]; then
+	printf "No wireguard clients.\n"
+	exit 1
+fi
 
-# after x minutes of inactivity the clients is disconnected.
-TIME_LIMIT=15
+# check if the user type the telegram config file and that file exists
+if [ ! "$1" ]; then
+	printf "The config file with telegram chat id and bot token is required\n"
+	exit 1
+fi
+if [ ! -f "$1" ]; then
+	printf "This config file doesn't exists\n"
+	exit 1
+fi
+telegram_chat_id=$(awk -F'=' '/^chat=/ { print $2}' $1)
+telegram_token=$(awk -F'=' '/^token=/ { print $2}' $1)
 
-#telegram section
-TELEGRAM_CHAT_ID="your-chat-id"
-TELEGRAM_BOT_ID="your-bot-api-key"
+while IFS= read -r LINE; do
+	public_key=$(awk '{ print $1 }' <<< "$LINE")
+	remote_ip=$(awk '{ print $3 }' <<< "$LINE" | awk -F':' '{print $1}')
+	last_seen=$(awk '{ print $5 }' <<< "$LINE")
+	client_name=$(grep -R "$public_key" /etc/wireguard/keys/ | awk -F"/etc/wireguard/keys/|_pub:" '{print $2}' | sed -e 's./..g')
+	client_file="$clients_directory/$client_name.txt"
 
-# human readable bytes
-hr() {
-  numfmt --to=iec-i --suffix=B "$1"
-}
+	# create the client file if not exists.
+	if [ ! -f "$client_file" ]; then
+		echo "offline" > $client_file
+	fi	
 
-# cicle all clients
-listClients() {
-  if DUMP="$(wg show wg0 dump)"; then
-    DUMP="$(tail -n +2 <<<"$DUMP")"
-  else
-    exit 1
-  fi
+	# setup notification variable
+	send_notification="no"
+	  
+	# last client status
+	last_connection_status=$(cat $client_file)
+	  
+	# elapsed seconds from last connection
+	last_seen_seconds=$(date -d @"$last_seen" '+%s')
+	
+	# it the user is online
+	if [ "$last_seen" -ne 0 ]; then
 
-  {
+		# elaped minutes from last connection
+		last_seen_elapsed_minutes=$((10#$(($now - $last_seen_seconds)) / 60))
 
-    #printf "\e[4mName\e[0m  \t  \e[4mRemote IP\e[0m  \t  \e[4mVirtual IP\e[0m  \t  \e[4mBytes Received\e[0m  \t  \e[4mBytes Sent\e[0m  \t  \e[4mLast Seen\e[0m\n"
+		# if the previous state was online and the elapsed minutes are greater then timeout, the user is offline
+		if [ $last_seen_elapsed_minutes -gt $timeout ] && [ "online" == $last_connection_status ]; then
+			echo "offline" > $client_file
+			send_notification="disconnected"
+			# if the previous state was offline and the elapsed minutes are lower then timout, the user is online
+		elif [ $last_seen_elapsed_minutes -le $timeout ] && [ "offline" == $last_connection_status ]; then
+			echo "online" > $client_file
+			send_notification="connected"
+		fi
+	else
+		# if the user is offline
+		if [ "offline" != "$last_connection_status" ]; then
+			echo "offline" > $client_file
+			send_notification="disconnected"
+		fi
+	fi
 
-    while IFS= read -r LINE; do
+	# send notification to telegram
+	if [ "no" != "$send_notification" ]; then
+		printf "The client %s is %s\n" $client_name $send_notification
+		message="🐉 Wireguard: \`$client_name is $send_notification from ip address $remote_ip\`"
+		curl -s -X POST "https://api.telegram.org/bot${telegram_token}/sendMessage" -F chat_id=$telegram_chat_id -F text="$message" -F parse_mode="MarkdownV2" > /dev/null 2>&1
+	else
+		printf "The client %s is %s, no notification will be send.\n" $client_name $(cat $client_file)
+	fi
 
-      PUBLIC_KEY="$(awk '{ print $1 }' <<<"$LINE")"
-      REMOTE_IP="$(awk '{ print $3 }' <<<"$LINE")"
-#      VIRTUAL_IP="$(awk '{ print $4 }' <<<"$LINE")"
-#      BYTES_RECEIVED="$(awk '{ print $6 }' <<<"$LINE")"
-#      BYTES_SENT="$(awk '{ print $7 }' <<<"$LINE")"
-      LAST_SEEN="$(awk '{ print $5 }' <<<"$LINE")"
-      CLIENT_NAME="$(grep -R "$PUBLIC_KEY" /etc/wireguard/keys/ | awk -F"/etc/wireguard/keys/|_pub:" '{print $2}' | sed -e 's./..g')"
-      CLIENT_CONNECTION_FILE="$CLIENTS_CONNECTION_PATH/$CLIENT_NAME.txt"
+done <<< "$wireguard_clients"
 
-      # first time, create the client file
-      if [ ! -f "$CLIENT_CONNECTION_FILE" ]; then
-        echo "offline" >$CLIENT_CONNECTION_FILE
-      fi
-
-      # default, no notification if there aren't changes
-      SEND_NOTIFICATION="no"
-
-      # last client connection status saved in txt file inside clients folder
-      LAST_CONNECTION_STATUS=$(cat $CLIENT_CONNECTION_FILE)
-
-      # seconds elapsed from last seen
-      LAST_SEEN_SECONDS=$(date -d @"$LAST_SEEN" '+%s')
-
-      # if the client is connected
-      if [ "$LAST_SEEN" -ne 0 ]; then
-        #printf "%s  \t  %s  \t  %s  \t  %s  \t  %s  \t  %s\n" "$CLIENT_NAME" "$REMOTE_IP" "${VIRTUAL_IP/\/32/}" "$(hr "$BYTES_RECEIVED")" "$(hr "$BYTES_SENT")" "$(date -d @"$LAST_SEEN" '+%b %d %Y - %T')"
-
-        # calculate the minutes elapsed from last seen
-        LAST_SEEN_ELAPSED_MINUTES=$((10#$(($NOW - $LAST_SEEN_SECONDS)) / 60))
-
-        # if the minutes are greather then time limit and the last status is online, the client is disconnected because
-        # there aren't activity
-        if [ $LAST_SEEN_ELAPSED_MINUTES -gt $TIME_LIMIT ] && [ "online" == $LAST_CONNECTION_STATUS ]; then
-          echo "offline" >$CLIENT_CONNECTION_FILE
-          SEND_NOTIFICATION="disconnected"
-
-        # if the minutes are less or equal to time limit, the client is connected.
-        elif [ $LAST_SEEN_ELAPSED_MINUTES -le $TIME_LIMIT ] && [ "offline" == $LAST_CONNECTION_STATUS ]; then
-
-          echo "online" >$CLIENT_CONNECTION_FILE
-          SEND_NOTIFICATION="connected"
-        fi
-      else
-        #printf "%s  \t  %s  \t  %s  \t  %s  \t  %s  \t  %s\n" "$CLIENT_NAME" "$REMOTE_IP" "${VIRTUAL_IP/\/32/}" "$(hr "$BYTES_RECEIVED")" "$(hr "$BYTES_SENT")" "(not yet)"
-        # if the last seen is zero, send notification only if the last status is online in the file txt
-        if [ "offline" != $LAST_CONNECTION_STATUS ]; then
-          echo "offline" >$CLIENT_CONNECTION_FILE
-          SEND_NOTIFICATION="disconnected"
-        fi
-      fi
-
-      # send the notification only if the variable is rewritten
-      if [ "no" != $SEND_NOTIFICATION ]; then
-        MESSAGE="🐉 Wireguard: \`$CLIENT_NAME $SEND_NOTIFICATION from $REMOTE_IP\`"
-        curl -s -X POST "https://api.telegram.org/bot${TELEGRAM_BOT_ID}/sendMessage" -F chat_id=$TELEGRAM_CHAT_ID -F text="$MESSAGE" -F parse_mode="MarkdownV2" >/dev/null 2>&1
-      fi
-
-    done \
-      <<<"$DUMP"
-
-    printf "\n"
-  } | column -t -s $'\t'
-}
-
-#start the script
-listClients
 exit 0

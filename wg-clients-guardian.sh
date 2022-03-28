@@ -8,7 +8,7 @@ clients_directory="$current_path/clients"
 now=$(date +%s)
 
 # after X minutes the clients will be considered disconnected
-timeout=5
+timeout=15
 
 # check if wireguard exists
 if ! command -v wg &> /dev/null; then

@@ -83,7 +83,7 @@ while IFS= read -r LINE; do
 		readonly MESSAGE="🐉 Wireguard: \`$CLIENT_NAME is $send_notification from ip address $REMOTE_IP\`"
 		curl -s -X POST "https://api.telegram.org/bot${TELEGRAM_TOKEN}/sendMessage" -F chat_id=$TELEGRAM_CHAT_ID -F text="$MESSAGE" -F parse_mode="MarkdownV2" > /dev/null 2>&1
 	else
-		printf "The client %s is %s, no notification will be sent.\n" $CLIENT_NAME $(cat $CLIENT_FILE)
+		printf "The client %s is %s, no notification will be send.\n" $CLIENT_NAME $(cat $CLIENT_FILE)
 	fi
 
 done <<< "$WIREGUARD_CLIENTS"

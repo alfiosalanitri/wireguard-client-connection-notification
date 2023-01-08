@@ -1,6 +1,6 @@
 #!/bin/bash
 # This script is written by Alfio Salanitri <www.alfiosalanitri.it> and are licensed under MIT License.
-# Credits: This script is inspired to https://github.com/pivpn/pivpn/blob/master/scripts/wireguard/clientSTAT.sh
+# Credits: This script is inspired by https://github.com/pivpn/pivpn/blob/master/scripts/wireguard/clientSTAT.sh
 
 # config variables
 readonly CURRENT_PATH=$(pwd)
@@ -47,24 +47,24 @@ while IFS= read -r LINE; do
 
 	# setup notification variable
 	send_notification="no"
-	  
+
 	# last client status
 	LAST_CONNECTION_STATUS=$(cat $CLIENT_FILE)
-	  
+
 	# elapsed seconds from last connection
 	LAST_SEEN_SECONDS=$(date -d @"$LAST_SEEN" '+%s')
 	
 	# it the user is online
 	if [ "$LAST_SEEN" -ne 0 ]; then
 
-		# elaped minutes from last connection
+		# elapsed minutes from last connection
 		LAST_SEEN_ELAPSED_MINUTES=$((10#$(($NOW - $LAST_SEEN_SECONDS)) / 60))
 
-		# if the previous state was online and the elapsed minutes are greater then TIMEOUT, the user is offline
+		# if the previous state was online and the elapsed minutes are greater than TIMEOUT, the user is offline
 		if [ $LAST_SEEN_ELAPSED_MINUTES -gt $TIMEOUT ] && [ "online" == $LAST_CONNECTION_STATUS ]; then
 			echo "offline" > $CLIENT_FILE
 			send_notification="disconnected"
-			# if the previous state was offline and the elapsed minutes are lower then timout, the user is online
+			# if the previous state was offline and the elapsed minutes are lower than timout, the user is online
 		elif [ $LAST_SEEN_ELAPSED_MINUTES -le $TIMEOUT ] && [ "offline" == $LAST_CONNECTION_STATUS ]; then
 			echo "online" > $CLIENT_FILE
 			send_notification="connected"

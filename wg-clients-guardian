@@ -12,7 +12,7 @@ readonly TIMEOUT=15
 
 # check if wireguard exists
 if ! command -v wg &> /dev/null; then
-	printf "Sorry, but wireguard is required. Install it with before.\n"
+	printf "Sorry, but wireguard is required. Install it and try again.\n"
 	exit 1;
 fi
 readonly WIREGUARD_CLIENTS=$(wg show wg0 dump | tail -n +2) # remove first line from list
@@ -21,13 +21,13 @@ if [ "" == "$WIREGUARD_CLIENTS" ]; then
 	exit 1
 fi
 
-# check if the user type the telegram config file and that file exists
+# check if the user passed in the telegram config file and that the file exists
 if [ ! "$1" ]; then
-	printf "The config file with telegram chat id and bot token is required\n"
+	printf "The config file with telegram chat id and bot token is required.\n"
 	exit 1
 fi
 if [ ! -f "$1" ]; then
-	printf "This config file doesn't exists\n"
+	printf "This telegram config file doesn't exist.\n"
 	exit 1
 fi
 readonly TELEGRAM_CHAT_ID=$(awk -F'=' '/^chat=/ { print $2}' $1)
@@ -40,7 +40,7 @@ while IFS= read -r LINE; do
 	client_name=$(grep -R "$public_key" /etc/wireguard/keys/ | awk -F"/etc/wireguard/keys/|_pub:" '{print $2}' | sed -e 's./..g')
 	client_file="$CLIENTS_DIRECTORY/$client_name.txt"
 
-	# create the client file if not exists.
+	# create the client file if it does not exist.
 	if [ ! -f "$client_file" ]; then
 		echo "offline" > $client_file
 	fi	
@@ -54,7 +54,7 @@ while IFS= read -r LINE; do
 	# elapsed seconds from last connection
 	last_seen_seconds=$(date -d @"$last_seen" '+%s')
 	
-	# it the user is online
+	# if the user is online
 	if [ "$last_seen" -ne 0 ]; then
 
 		# elapsed minutes from last connection
@@ -64,7 +64,7 @@ while IFS= read -r LINE; do
 		if [ $last_seen_elapsed_minutes -gt $TIMEOUT ] && [ "online" == $last_connection_status ]; then
 			echo "offline" > $client_file
 			send_notification="disconnected"
-			# if the previous state was offline and the elapsed minutes are lower than timout, the user is online
+		# if the previous state was offline and the elapsed minutes are lower than timout, the user is online
 		elif [ $last_seen_elapsed_minutes -le $TIMEOUT ] && [ "offline" == $last_connection_status ]; then
 			echo "online" > $client_file
 			send_notification="connected"

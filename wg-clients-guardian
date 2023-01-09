@@ -80,8 +80,8 @@ while IFS= read -r LINE; do
 	# send notification to telegram
 	if [ "no" != "$send_notification" ]; then
 		printf "The client %s is %s\n" $client_name $send_notification
-		readonly MESSAGE="🐉 Wireguard: \`$client_name is $send_notification from ip address $remote_ip\`"
-		curl -s -X POST "https://api.telegram.org/bot${TELEGRAM_TOKEN}/sendMessage" -F chat_id=$TELEGRAM_CHAT_ID -F text="$MESSAGE" -F parse_mode="MarkdownV2" > /dev/null 2>&1
+		message="🐉 Wireguard: \`$client_name is $send_notification from ip address $remote_ip\`"
+		curl -s -X POST "https://api.telegram.org/bot${TELEGRAM_TOKEN}/sendMessage" -F chat_id=$TELEGRAM_CHAT_ID -F text="$message" -F parse_mode="MarkdownV2" > /dev/null 2>&1
 	else
 		printf "The client %s is %s, no notification will be sent.\n" $client_name $(cat $client_file)
 	fi

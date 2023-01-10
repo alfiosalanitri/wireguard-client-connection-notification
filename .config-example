@@ -1,2 +1,21 @@
+[globals]
+; Choose the notification channel.
+; Possible values are:
+;   gotify
+;   telegram
+;   both
+notification_channel=both
+; After X minutes the clients will be considered disconnected
+; Choose a timeout greater then 5 minutes to limit many false positives
+timeout=5
+
+[telegram]
+; Register your telegram bot https://core.telegram.org/bots
 chat=type-your-chat-id
 token=type-your-bot-token
+
+[gotify]
+; Install your gotify server https://gotify.net/docs/index and create an app
+gotify_host=https://your-host.ext
+gotify_app_token=your-app-token
+gotify_title=Wireguard Guardian

@@ -48,7 +48,16 @@ while IFS= read -r LINE; do
 	public_key=$(awk '{ print $1 }' <<< "$LINE")
 	remote_ip=$(awk '{ print $3 }' <<< "$LINE" | awk -F':' '{print $1}')
 	last_seen=$(awk '{ print $5 }' <<< "$LINE")
-	client_name=$(grep -R "$public_key" /etc/wireguard/keys/ | awk -F"/etc/wireguard/keys/|_pub:" '{print $2}' | sed -e 's./..g')
+	# By default, the client name is just the sanitized public key containing only letters and numbers.
+	client_name=$(echo "$public_key" | sed 's/[^a-zA-Z0-9]//g')
+	# check if the wireguard directory keys exists (created by pivpn)
+	if [ -d "/etc/wireguard/keys/" ]; then
+		# if the public_key is stored in the /etc/wireguard/keys/username_pub file, save the username in the client_name var
+		client_name_by_public_key=$(grep -R "$public_key" /etc/wireguard/keys/ | awk -F"/etc/wireguard/keys/|_pub:" '{print $2}' | sed -e 's./..g')
+		if [ "" != "$client_name_by_public_key" ]; then
+			client_name=$client_name_by_public_key
+		fi
+	fi
 	client_file="$CLIENTS_DIRECTORY/$client_name.txt"
 
 	# create the client file if it does not exist.

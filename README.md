@@ -29,7 +29,7 @@ git clone https://github.com/yourusername/wireguard-client-connection-notificati
 1. Grant execution permissions to the main script:
 
    ```bash
-   sudo chmod +x /path/to/wireguard-client-connection-notification/wg-clients-guardian
+   sudo chmod +x /path/to/wireguard-client-connection-notification/wg-clients-guardian.sh
    ```
 
 2. Add the script to the root user's cron job to run it periodically. Elevated privileges are required to access WireGuard tunnel information.
@@ -43,7 +43,7 @@ git clone https://github.com/yourusername/wireguard-client-connection-notificati
    - Add the following line to execute the script every minute:
 
      ```bash
-     * * * * * cd /path/to/wireguard-client-connection-notification && /path/to/wireguard-client-connection-notification/wg-clients-guardian /path/to/wireguard-client-connection-notification/.config > /dev/null 2>&1
+     * * * * * cd /path/to/wireguard-client-connection-notification && /path/to/wireguard-client-connection-notification/wg-clients-guardian.sh /path/to/wireguard-client-connection-notification/.config > /dev/null 2>&1
      ```
 
 ### 4. Start Receiving Notifications

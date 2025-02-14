@@ -18,4 +18,4 @@ token=type-your-bot-token
 ; Install your gotify server https://gotify.net/docs/index and create an app
 gotify_host=https://your-host.ext
 gotify_app_token=your-app-token
-gotify_title=Wireguard Guardian
+gotify_title=WireGuard Guardian

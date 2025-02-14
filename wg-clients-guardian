@@ -63,7 +63,7 @@ while IFS= read -r LINE; do
 	# create the client file if it does not exist.
 	if [ ! -f "$client_file" ]; then
 		echo "offline" > $client_file
-	fi	
+	fi
 
 	# setup notification variable
 	send_notification="no"
@@ -73,7 +73,7 @@ while IFS= read -r LINE; do
 
 	# elapsed seconds from last connection
 	last_seen_seconds=$(date -d @"$last_seen" '+%s')
-	
+
 	# if the user is online
 	if [ "$last_seen" -ne 0 ]; then
 
@@ -101,13 +101,13 @@ while IFS= read -r LINE; do
 	if [ "no" != "$send_notification" ]; then
 		printf "The client %s is %s\n" $client_name $send_notification
 		message="$client_name is $send_notification from ip address $remote_ip"
-    if [ "telegram" == "$NOTIFICATION_CHANNEL" ] || [ "both" == "$NOTIFICATION_CHANNEL" ]; then
-      curl -s -X POST "https://api.telegram.org/bot${TELEGRAM_TOKEN}/sendMessage" -F chat_id=$TELEGRAM_CHAT_ID -F text="🐉 Wireguard: \`$message\`" -F parse_mode="MarkdownV2" > /dev/null 2>&1
-    fi
-    if [ "gotify" == "$NOTIFICATION_CHANNEL" ] || [ "both" == "$NOTIFICATION_CHANNEL" ]; then
-      curl -X POST "${GOTIFY_HOST}/message" -H "accept: application/json" -H "Content-Type: application/json" -H "Authorization: Bearer ${GOTIFY_APP_TOKEN}" -d '{"message": "'"$message"'", "priority": 5, "title": "'"$GOTIFY_TITLE"'"}' > /dev/null 2>&1
-    fi
-  else
+		if [ "telegram" == "$NOTIFICATION_CHANNEL" ] || [ "both" == "$NOTIFICATION_CHANNEL" ]; then
+			curl -s -X POST "https://api.telegram.org/bot${TELEGRAM_TOKEN}/sendMessage" -F chat_id=$TELEGRAM_CHAT_ID -F text="🐉 Wireguard: \`$message\`" -F parse_mode="MarkdownV2" > /dev/null 2>&1
+		fi
+		if [ "gotify" == "$NOTIFICATION_CHANNEL" ] || [ "both" == "$NOTIFICATION_CHANNEL" ]; then
+			curl -X POST "${GOTIFY_HOST}/message" -H "accept: application/json" -H "Content-Type: application/json" -H "Authorization: Bearer ${GOTIFY_APP_TOKEN}" -d '{"message": "'"$message"'", "priority": 5, "title": "'"$GOTIFY_TITLE"'"}' > /dev/null 2>&1
+		fi
+	else
 		printf "The client %s is %s, no notification will be sent.\n" $client_name $(cat $client_file)
 	fi
 

@@ -24,6 +24,8 @@ git clone https://github.com/yourusername/wireguard-client-connection-notificati
 
 2. Edit the `.config` file to include your notification settings. Make sure to configure either Telegram or Gotify server details.
 
+   Optional: Integrate with `wgdashboard` to resolve peer public keys to client names. This is done via the `getWireguardConfigurationInfo` API: set `wgdashboard_api_url` to the base URL of your wgdashboard (e.g. `https://localhost:8080`) and `wgdashboard_api_key` to your API key.
+
 ### 3. Set Up Permissions and Schedule the Script
 
 1. Grant execution permissions to the main script:
